@@ -1,5 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from enum import Enum
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow import fields
 
 db = SQLAlchemy()
 
@@ -7,6 +9,9 @@ db = SQLAlchemy()
 albums_songs = db.Table('album_song', \
                 db.Column('album_id', db.Integer, db.ForeignKey('album.id'), primary_key=True), \
                 db.Column('song_id', db.Integer, db.ForeignKey('song.id'), primary_key=True))
+
+# ------------------------------------------------
+# Models
 
 # Song
 class Song(db.Model): 
@@ -39,3 +44,35 @@ class User(db.Model):
     user_name = db.Column(db.String(64))
     password = db.Column(db.String(32))
     albums = db.relationship('Album', cascade='all, delete, delete-orphan')
+
+# -------------------------------------------------------------------
+# Serializers
+
+# User
+class UserSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = User
+        include_relationships = True
+        load_instance = True
+
+# Song 
+class SongSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = Song
+        include_relationships = True
+        load_instance = True 
+
+# Album
+class Enum2Dict(fields.Field):
+    def _serialize(self, value, attr, obj, **kwargs):
+        if value is None:
+            return None
+        return {'key': value.name, 'value': value.value}
+
+
+class AlbumSchema(SQLAlchemyAutoSchema):
+    medium = Enum2Dict(attribute='medium')
+    class Meta:
+        model = Album
+        include_relationships = True
+        load_instance =  True
